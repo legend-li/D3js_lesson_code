@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>D3 study</title>
+    <meta name="format-detection" content="telephone=no,email=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <script src="./d3.v3.min.js"></script>
+	<style>
+		.axis path, .axis line{
+			fill: none;
+			stroke: black;
+			shap-rendering: orispEdges;
+		}
+		.axis text {
+			font-family: sans-serif;
+			font-size: 11px;
+		}
+		.myText{
+			text-anchor: middle;
+			fill: black;
+		}
+	</style>
+</head>
+<body>
+	<script>
+		var width = 300;
+		var height = 300;
+		var svg2 = d3.select('body')
+					 .append('svg')
+					 .attr('width', width)
+					 .attr('height', height)
+					 .attr('style', 'background-color: #fafafa')
+		var padding = {left: 30, right: 20, top: 20, bottom: 30};
+		var dataset2 = [20, 15, 13, 10, 26, 7];
+		var yScale = d3.scale.linear()
+						.domain([0, d3.max(dataset2)])
+						.range([height-padding.top-padding.bottom, 0]);
+		var xScale = d3.scale.ordinal()
+						.domain(d3.range(dataset2.length))
+						.rangeRoundBands([0,width-padding.left-padding.right]);
+		var xAxis = d3.svg.axis()
+						.scale(xScale)
+						.orient('bottom');
+		var yAxis = d3.svg.axis()
+						.scale(yScale)
+						.orient('left');
+		var rectPadding = 8;
+		svg2.selectAll('rect')
+			.data(dataset2)
+			.enter()
+			.append('rect')
+			.attr('x', function(d, i){
+				return xScale(i)+rectPadding/2+padding.left;
+			})
+			.attr('y', function(d, i){
+				return yScale(d)+padding.top;
+			})
+			.attr('width', function(d, i){
+				return xScale.rangeBand() - rectPadding;
+			})
+			.attr('height', function(d, i){
+				return height-padding.top-padding.bottom-yScale(d);
+			})
+			.style('fill', 'steelblue')
+			
+		svg2.selectAll('.myText')
+			.data(dataset2)
+			.enter()
+			.append('text')
+			.attr('class', 'myText')
+			.attr('x', function(d, i){
+				return xScale(i)+padding.left+rectPadding/2+(xScale.rangeBand()-rectPadding)/2;
+			})
+			.attr('y', function(d, i){
+				return yScale(d)+padding.top;
+			})
+			.text(function(d){
+				return d;
+			})
+		//添加x轴
+		svg2.append("g")
+		  .attr("class","axis")
+		  .attr("transform","translate(" + padding.left + "," + (height - padding.bottom) + ")")
+		  .call(xAxis); 
+				
+		//添加y轴
+		svg2.append("g")
+		  .attr("class","axis")
+		  .attr("transform","translate(" + padding.left + "," + padding.top + ")")
+		  .call(yAxis);
+	</script>
+</body>
+</html>

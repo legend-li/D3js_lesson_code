@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>D3 study</title>
+    <meta name="format-detection" content="telephone=no,email=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <script src="./d3.v3.min.js"></script>
+</head>
+<body>
+    <svg width='300' height='300' version='1.1' xmlns='http://www.w3.org/2000/svg'>
+		<rect x='20' y='20' width='200' height='100' style='fill:steelblue; stroke:blue; stroke-width:4; opacity:0.5;'></rect>
+		<rect x='20' y='150' width='200' height='100' rx='20' ry='30' style='fill:steelblue; stroke:blue; stroke-width:4; opacity:0.5;'></rect>
+	</svg>
+	<div>
+		<p>混沌传奇</p>
+		<p>大漠传奇</p>
+	</div>
+	<script>
+		document.querySelector('p').innerText = 'hello world!';
+		console.log(d3.select('body').selectAll('p'))
+		d3.select('body').selectAll('p:last-child').append('span').text('你好')
+		d3.select('body').selectAll('p:last-child').insert('span', 'span').text('： ')
+		
+		d3.select('p:first-child').datum('datum').text(function(d, i){
+			return d + i
+		});
+		
+		d3.selectAll('p').data(['data1', 'data2']).text(function(d, i){
+			return '第'+i+'个数据是：'+d;
+		})
+		
+		d3.select('body > div').append('p').text('新增一个p元素').style('color', 'red').attr('id', 'last_p');
+		d3.select('body > div').insert('p', '#last_p').text('插入一个p元素').style('color', 'blue')
+		d3.select('div > p:first-child').remove();
+		d3.select('p:first-child').attr('id', 'first_child')
+		d3.select('div').insert('p', '#first_child').text('删除了“第0个数据是：data1”')
+		
+		
+	</script>
+</body>
+</html>
