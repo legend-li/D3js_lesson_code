@@ -83,7 +83,7 @@
 			yAxis.scale()
 					.domain([0, d3.max(dataSource)]);
 			svg.selectAll('g.y_axis')
-					.transition()
+					// .transition()
 					.call(yAxis)
 		}
 		
@@ -105,8 +105,9 @@
 			let exitText = updateText.exit();
 			
 			//绘制矩形方法
-			const drawRect = (rect) => {
-				rect.attr('fill', 'steelblue')
+			const drawRect = (rect, type) => {
+				if(type === 'enter'){
+					rect.attr('fill', 'steelblue')
 						.attr('x', function(d, i){
 							return config.padding.left+xScale(i);
 						})
@@ -114,6 +115,20 @@
 							return config.padding.top+config.yAxisWidth;
 						})
 						.attr('height', 0)
+						.transition()
+						.delay(100)
+						.attr('x', function(d, i){
+							return config.padding.left+xScale(i);
+						})
+						.attr('y', function(d, i){
+							return yScale(d)+config.padding.top;
+						})
+						.attr('width', xScale.rangeBand())
+						.attr('height', function(d, i){
+							return config.yAxisWidth-yScale(d);
+						})
+				}else{
+					rect.attr('fill', 'steelblue')
 						.transition()
 						.attr('x', function(d, i){
 							return config.padding.left+xScale(i);
@@ -125,25 +140,40 @@
 						.attr('height', function(d, i){
 							return config.yAxisWidth-yScale(d);
 						})
+				}
 			}
 
 			//矩形的update部分的处理方法
-			drawRect(updateRect);
+			drawRect(updateRect, 'update');
 			//矩形的enter部分的处理方法
 			enterRect = enterRect.append('rect');
-			drawRect(enterRect);
+			drawRect(enterRect, 'enter');
 			//矩形的exit部分的处理方法
 			exitRect.remove();
 
 			//给矩形添加文字方法
-			const drawText = (text) => {
-				text.attr('class', 'myText')
+			const drawText = (text, type) => {
+				if(type === 'enter'){
+					text.attr('class', 'myText')
 						.attr('x', function(d, i){
 							return config.padding.left+xScale(i)+xScale.rangeBand()/2;
 						})
 						.attr('y', function(d, i){
 							return config.padding.top+config.yAxisWidth;
 						})
+						.transition()
+						.delay(100)
+						.attr('x', function(d, i){
+							return config.padding.left+xScale(i)+xScale.rangeBand()/2;
+						})
+						.attr('y', function(d, i){
+							return yScale(d)+config.padding.top-config.textY;
+						})
+						.text(function(d, i){
+							return d;
+						})
+				}else{
+					text.attr('class', 'myText')
 						.transition()
 						.attr('x', function(d, i){
 							return config.padding.left+xScale(i)+xScale.rangeBand()/2;
@@ -154,13 +184,14 @@
 						.text(function(d, i){
 							return d;
 						})
+				}
 			}
 
 			//文字的update部分的处理方法
-			drawText(updateText);
+			drawText(updateText, 'update');
 			//文字的enter部分的处理方法
 			enterText = enterText.append('text');
-			drawText(enterText);
+			drawText(enterText, 'enter');
 			//文字的exit部分的处理方法
 			exitText.remove();
 		}
@@ -170,9 +201,10 @@
 			if(!first){
 				reScale(dataSource)
 			}
-
-			//开始绘制矩形和矩形的文字
-			drawRectAndText(svg, dataSource, xScale, yScale, config)
+			// if(first){
+				//开始绘制矩形和矩形的文字
+				drawRectAndText(svg, dataSource, xScale, yScale, config)
+			// }			
 		}
 
 		//绘制图表
