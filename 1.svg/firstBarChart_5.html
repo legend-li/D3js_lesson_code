@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>D3 study</title>
+    <meta name="format-detection" content="telephone=no,email=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <script src="./d3.v3.min.js"></script>
+	<style>
+		.axis path, .axis line{
+			fill: none;
+			stroke: black;
+			shap-rendering: orispEdges;
+		}
+		.axis text {
+			font-family: sans-serif;
+			font-size: 11px;
+		}
+		.myText{
+			text-anchor: middle;
+			fill: black;
+		}
+	</style>
+</head>
+<body>
+	<div>
+			<button type="button" onclick="sortData(dataSource)">排序</button>
+			<button type="button" onclick="addData(dataSource)">添加数据</button>		
+	</div>
+	<script>
+		let config = {
+			width: 600,
+			height: 600,
+			padding: {left: 30, right: 30, top: 30, bottom: 30},
+			textY: 10,
+		};
+		config.xAxisWidth = config.width-config.padding.left-config.padding.right;
+		config.yAxisWidth = config.height-config.padding.top-config.padding.bottom;
+
+		let dataSource = [20, 30, 10, 5, 1, 50];
+		let svg = d3.select('body')
+						.append('svg')
+						.attr('width', config.width)
+						.attr('height', config.height)
+
+		//定义x坐标轴的比例尺
+		let xScale = d3.scale.ordinal()
+							 .domain(d3.range(dataSource.length))
+							 .rangeRoundBands([0, config.xAxisWidth], 0.2);
+		//定义y坐标轴的比例尺
+		let yScale = d3.scale.linear()
+							 .domain([0, d3.max(dataSource)])
+							 .range([config.yAxisWidth, 0]);
+		//定义x坐标轴
+		let xAxis = d3.svg.axis()
+							.scale(xScale)
+							.orient('bottom');
+		//定义y坐标轴
+		let yAxis = d3.svg.axis()
+							.scale(yScale)
+							.orient('left');
+		
+		//绘制坐标轴方法
+		const drawAxis = (svg, axis, x, y, type) => {
+			svg.append('g')
+				 .attr('class', 'axis'+` ${type==='X'? 'x_axis' : 'y_axis'}`)
+				 .attr('transform', 'translate(' + x + ', ' + y + ')')
+				 .call(axis);
+		}
+
+		//开始绘制坐标轴X
+		drawAxis(svg, xAxis, config.padding.left, config.height-config.padding.bottom, 'X');
+		//开始绘制坐标轴Y
+		drawAxis(svg, yAxis, config.padding.left, config.padding.top, 'Y');
+
+		//动态更新坐标轴方法
+		const reScale = (dataSource) => {
+			xAxis.scale()
+					.domain(d3.range(dataSource.length));
+			svg.selectAll("g.x_axis")
+					.transition()
+					.call(xAxis);
+			yAxis.scale()
+					.domain([0, d3.max(dataSource)]);
+			svg.selectAll('g.y_axis')
+					.transition()
+					.call(yAxis)
+		}
+		
+		//绘制矩形并且给矩形添加文字方法
+		const drawRectAndText = (svg, dataSource, xScale, yScale, config) => {
+			//获取矩形的update部分
+			let updateRect = svg.selectAll('rect')
+							.data(dataSource);
+			//获取矩形的enter部分
+			let enterRect = updateRect.enter();
+			//获取矩形的exit部分
+			let exitRect = updateRect.exit();
+			//获取文字的update部分
+			let updateText = svg.selectAll('.myText')
+								 .data(dataSource);
+			//获取文字的enter部分
+			let enterText = updateText.enter();
+			//获取文字的exit部分
+			let exitText = updateText.exit();
+			
+			//绘制矩形方法
+			const drawRect = (rect) => {
+				rect.attr('fill', 'steelblue')
+						.attr('x', function(d, i){
+							return config.padding.left+xScale(i);
+						})
+						.attr('y', function(d, i){
+							return config.padding.top+config.yAxisWidth;
+						})
+						.attr('height', 0)
+						.transition()
+						.attr('x', function(d, i){
+							return config.padding.left+xScale(i);
+						})
+						.attr('y', function(d, i){
+							return yScale(d)+config.padding.top;
+						})
+						.attr('width', xScale.rangeBand())
+						.attr('height', function(d, i){
+							return config.yAxisWidth-yScale(d);
+						})
+			}
+
+			//矩形的update部分的处理方法
+			drawRect(updateRect);
+			//矩形的enter部分的处理方法
+			enterRect = enterRect.append('rect');
+			drawRect(enterRect);
+			//矩形的exit部分的处理方法
+			exitRect.remove();
+
+			//给矩形添加文字方法
+			const drawText = (text) => {
+				text.attr('class', 'myText')
+						.attr('x', function(d, i){
+							return config.padding.left+xScale(i)+xScale.rangeBand()/2;
+						})
+						.attr('y', function(d, i){
+							return config.padding.top+config.yAxisWidth;
+						})
+						.transition()
+						.attr('x', function(d, i){
+							return config.padding.left+xScale(i)+xScale.rangeBand()/2;
+						})
+						.attr('y', function(d, i){
+							return yScale(d)+config.padding.top-config.textY;
+						})
+						.text(function(d, i){
+							return d;
+						})
+			}
+
+			//文字的update部分的处理方法
+			drawText(updateText);
+			//文字的enter部分的处理方法
+			enterText = enterText.append('text');
+			drawText(enterText);
+			//文字的exit部分的处理方法
+			exitText.remove();
+		}
+		
+		//绘制图表方法
+		const draw = (first) => {
+			if(!first){
+				reScale(dataSource)
+			}
+
+			//开始绘制矩形和矩形的文字
+			drawRectAndText(svg, dataSource, xScale, yScale, config)
+		}
+
+		//绘制图表
+		draw(true);
+		
+		//对图表数据进行排序
+		const sortData = (dataSource) => {
+			dataSource.sort(d3.ascending);
+			draw();
+		}
+
+		//添加数据到图表中
+		const addData = (dataSource) => {
+			dataSource.push(parseInt(Math.random()*100));
+			draw();
+		}
+
+
+
+
+
+
+
+
+
+
+
+		// var width = 300;
+		// var height = 300;
+		// var svg2 = d3.select('body')
+		// 			 .append('svg')
+		// 			 .attr('width', width)
+		// 			 .attr('height', height)
+		// 			 .attr('style', 'background-color: #fafafa')
+		// var padding = {left: 30, right: 20, top: 20, bottom: 30};
+		// var dataset2 = [20, 15, 13, 10, 26, 7, 20, 100];
+		// var yScale = d3.scale.linear()
+		// 				.domain([0, d3.max(dataset2)])
+		// 				.range([height-padding.top-padding.bottom, 0]);
+		// var xScale = d3.scale.ordinal()
+		// 				.domain(d3.range(dataset2.length))
+		// 				.rangeRoundBands([0,width-padding.left-padding.right]);
+		// var xAxis = d3.svg.axis()
+		// 				.scale(xScale)
+		// 				.orient('bottom');
+		// var yAxis = d3.svg.axis()
+		// 				.scale(yScale)
+		// 				.orient('left');
+		// var rectPadding = 8;
+		// var rects = svg2.selectAll('rect')
+		// 	.data(dataset2)
+		// 	.enter()
+		// 	.append('rect')
+		// 	.attr('x', function(d, i){
+		// 		return xScale(i)+rectPadding/2+padding.left;
+		// 	})
+		// 	.attr('y', function(d, i){
+		// 		return yScale(yScale.domain()[0])+padding.top;
+		// 	})
+		// 	.attr('width', function(d, i){
+		// 		return xScale.rangeBand() - rectPadding;
+		// 	})
+		// 	.attr('height', function(d, i){
+		// 		return 0;
+		// 	})
+		// 	.attr('fill', 'steelblue')
+		
+		// rects.transition()
+		// 	.delay(function(d, i){
+		// 		return i*200;
+		// 	})
+		// 	.duration(2000)
+		// 	.ease('bounce')
+		// 	.attr('y', function(d, i){
+		// 		return yScale(d)+padding.top;
+		// 	})
+		// 	.attr('height', function(d, i){
+		// 		return height-padding.top-padding.bottom-yScale(d);
+		// 	})
+		
+		// setTimeout(function(){
+		// 	rects.on("mouseover",function(d,i){
+		// 			d3.select(this)
+		// 				.attr("fill","yellow");
+		// 		})
+		// 		.on("mouseout",function(d,i){
+		// 			d3.select(this)
+		// 				.transition()
+		// 				.duration(500)
+		// 				.attr("fill","steelblue");
+		// 		})
+		// }, 2000+dataset2.length*200)
+		
+			
+		// svg2.selectAll('.myText')
+		// 	.data(dataset2)
+		// 	.enter()
+		// 	.append('text')
+		// 	.attr('class', 'myText')
+		// 	.attr('x', function(d, i){
+		// 		return xScale(i)+padding.left+rectPadding/2+(xScale.rangeBand()-rectPadding)/2;
+		// 	})
+		// 	.attr('y', function(d, i){
+		// 		return yScale.range()[0]+padding.top-5;
+		// 	})
+		// 	.text(function(d){
+		// 		return d;
+		// 	})
+		// 	.transition()
+		// 	.delay(function(d, i){
+		// 		return i*200;
+		// 	})
+		// 	.duration(2000)
+		// 	.ease('bounce')
+		// 	.attr('y', function(d, i){
+		// 		return yScale(d)+padding.top-5;
+		// 	})
+		// //添加x轴
+		// svg2.append("g")
+		//   .attr("class","axis")
+		//   .attr("transform","translate(" + padding.left + "," + (height - padding.bottom) + ")")
+		//   .call(xAxis); 
+				
+		// //添加y轴
+		// svg2.append("g")
+		//   .attr("class","axis")
+		//   .attr("transform","translate(" + padding.left + "," + padding.top + ")")
+		//   .call(yAxis);
+	</script>
+</body>
+</html>
